@@ -19,8 +19,13 @@ router.get("/todos", async (req, res) => {
 //POST ToDos
 router.post("/todos", async (req, res) => {
   const collection = getCollection();
-  const { todo } = req.body;
+  let { todo } = req.body;
 
+  if (!todo) {
+    res.status(400).json({ msg: "error no todo found" });
+  }
+
+  todo = typeof todo === "string" ? todo : JSON.stringify(todo);
   const newTodo = await collection.insertOne({ todo, status: false });
 
   res.status(201).json({ todo, status: false, _id: newTodo.insertedId });
@@ -42,12 +47,16 @@ router.put("/todos/:id", async (req, res) => {
   const _id = new ObjectId(req.params.id);
   const { status } = req.body;
 
+  if (typeof status !== "boolean") {
+    return res.status(400).json({ msg: "invalid status" });
+  }
+
   const updatedTodo = await collection.updateOne(
     { _id },
     { $set: { status: !status } }
   );
 
-  res.status(200).json(deleteTodo);
+  res.status(200).json(updatedTodo);
 });
 
 module.exports = router;
